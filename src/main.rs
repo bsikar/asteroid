@@ -40,8 +40,9 @@ impl Ship {
 
         self.bullets.iter_mut().for_each(|b| b.update());
         self.bullets.iter_mut().for_each(|b| b.draw());
+        // range of bullets
         self.bullets
-            .retain(|b| get_time() - b.time_shot_out < 3. && !b.collided);
+            .retain(|b| get_time() - b.time_shot_out < 0.33 && !b.collided);
     }
 
     fn mv(&mut self) {
@@ -79,13 +80,7 @@ impl Ship {
     }
 
     fn shoot(&mut self) {
-        let rotation = self.rotation.to_radians();
-        let rotated_vec = Vec2::new(rotation.sin(), -rotation.cos());
-
-        self.bullets.push(Bullet::new(
-            self.position + rotated_vec * SHIP_HEIGHT / 2.,
-            self.rotation,
-        ));
+        self.bullets.push(Bullet::new(self.position, self.rotation));
     }
 }
 
@@ -114,9 +109,10 @@ impl Bullet {
     }
 
     fn update(&mut self) {
+        // spacing of bullets
         let rotation = self.rotation.to_radians();
-        self.position.y += rotation.cos() * -4.;
-        self.position.x += rotation.sin() * 4.;
+        self.position.y += rotation.cos() * rand::gen_range(-20., -18.);
+        self.position.x += rotation.sin() * rand::gen_range(18., 20.);
     }
 }
 
