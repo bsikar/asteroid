@@ -6,6 +6,7 @@ const SHIP_BASE: f32 = 22.;
 struct Ship {
     position: Vec2,
     rotation: f32,
+    bullets: Vec<Bullet>,
 }
 
 impl Ship {
@@ -13,10 +14,11 @@ impl Ship {
         Ship {
             position: Vec2::new(screen_width() / 2., screen_height() / 2.),
             rotation: 0.,
+            bullets: vec![],
         }
     }
 
-    fn draw(&self) {
+    fn draw(&mut self) {
         let rotation = self.rotation.to_radians();
 
         let v1 = Vec2::new(
@@ -35,6 +37,11 @@ impl Ship {
         );
 
         draw_triangle_lines(v1, v2, v3, 2., BLACK);
+
+        self.bullets.iter_mut().for_each(|b| b.update());
+        self.bullets.iter_mut().for_each(|b| b.draw());
+        self.bullets
+            .retain(|b| get_time() - b.time_shot_out < 3. && !b.collided);
     }
 
     fn mv(&mut self) {
@@ -46,12 +53,14 @@ impl Ship {
         }
 
         if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
-            // This will shoot in the future
+            self.shoot();
         }
 
         if is_key_down(KeyCode::Left) || is_key_down(KeyCode::A) {
             self.rotation -= 5.;
-        } else if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D) {
+        }
+
+        if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D) {
             self.rotation += 5.;
         }
 
@@ -68,6 +77,47 @@ impl Ship {
             self.position.y = screen_height();
         }
     }
+
+    fn shoot(&mut self) {
+        let rotation = self.rotation.to_radians();
+        let rotated_vec = Vec2::new(rotation.sin(), -rotation.cos());
+
+        self.bullets.push(Bullet::new(
+            self.position + rotated_vec * SHIP_HEIGHT / 2.,
+            self.rotation,
+        ));
+    }
+}
+
+const BULLET_SIZE: f32 = 2.;
+
+#[derive(Copy, Clone)]
+struct Bullet {
+    position: Vec2,
+    rotation: f32,
+    time_shot_out: f64,
+    collided: bool,
+}
+
+impl Bullet {
+    fn new(position: Vec2, rotation: f32) -> Bullet {
+        Bullet {
+            position,
+            rotation,
+            time_shot_out: get_time(),
+            collided: false,
+        }
+    }
+
+    fn draw(self) {
+        draw_circle(self.position.x, self.position.y, BULLET_SIZE, BLACK);
+    }
+
+    fn update(&mut self) {
+        let rotation = self.rotation.to_radians();
+        self.position.y += rotation.cos() * -4.;
+        self.position.x += rotation.sin() * 4.;
+    }
 }
 
 #[macroquad::main("Asteroids")]
@@ -80,6 +130,6 @@ async fn main() {
         ship.draw();
         ship.mv();
 
-        next_frame().await
+        next_frame().await;
     }
 }
