@@ -41,8 +41,8 @@ impl Ship {
         if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
             let rotation = self.rotation.to_radians();
 
-            self.position.y += rotation.cos() * -3.;
-            self.position.x += rotation.sin() * 3.;
+            self.position.y += rotation.cos() * -4.;
+            self.position.x += rotation.sin() * 4.;
         }
 
         if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
