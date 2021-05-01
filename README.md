@@ -1,2 +1,2 @@
-# asteroid
-A simple GUI rust asteroid game
+# asteroids
+A simple GUI rust asteroids game
