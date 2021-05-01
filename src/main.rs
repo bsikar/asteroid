@@ -116,7 +116,15 @@ impl Bullet {
     }
 }
 
-//struct Asteroid {}
+#[allow(dead_code)]
+struct Asteroid {
+    position: Vec2,
+    rotation: f32,
+    sides: u8,
+    collided: bool,
+}
+
+impl Asteroid {}
 
 #[macroquad::main("Asteroids")]
 async fn main() {
