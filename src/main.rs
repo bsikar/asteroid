@@ -42,7 +42,7 @@ impl Ship {
         self.bullets.iter_mut().for_each(|b| b.draw());
         // range of bullets
         self.bullets
-            .retain(|b| get_time() - b.time_shot_out < 0.33 && !b.collided);
+            .retain(|b| get_time() - b.time_shot_out < 0.25 && !b.collided);
     }
 
     fn mv(&mut self) {
@@ -111,10 +111,12 @@ impl Bullet {
     fn update(&mut self) {
         // spacing of bullets
         let rotation = self.rotation.to_radians();
-        self.position.y += rotation.cos() * rand::gen_range(-20., -18.);
-        self.position.x += rotation.sin() * rand::gen_range(18., 20.);
+        self.position.y += rotation.cos() * rand::gen_range(-30., -25.);
+        self.position.x += rotation.sin() * rand::gen_range(25., 30.);
     }
 }
+
+//struct Asteroid {}
 
 #[macroquad::main("Asteroids")]
 async fn main() {
