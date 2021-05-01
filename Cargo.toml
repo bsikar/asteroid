@@ -1,12 +1,12 @@
 [package]
-name = "asteroid"
+name = "asteroids"
 version = "0.1.0"
 authors = ["Brighton Sikarskie <brighton.sikarskie@tuta.io>"]
 edition = "2018"
-description = "A simple GUI rust asteroid game"
+description = "A simple GUI rust asteroids game"
 readme = "README.md"
-homepage = "https://github.com/bsikar/asteroid"
-repository = "https://github.com/bsikar/asteroid"
+homepage = "https://github.com/bsikar/asteroids"
+repository = "https://github.com/bsikar/asteroids"
 license = "MIT"
 keywords = ["gamedev", "graphics", "game", "gui"]
 categories = ["games"]
