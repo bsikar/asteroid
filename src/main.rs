@@ -113,6 +113,18 @@ impl Bullet {
         let rotation = self.rotation.to_radians();
         self.position.y += rotation.cos() * rand::gen_range(-30., -25.);
         self.position.x += rotation.sin() * rand::gen_range(25., 30.);
+
+        if self.position.x > screen_width() {
+            self.position.x = 0.;
+        } else if self.position.x < 0. {
+            self.position.x = screen_width();
+        }
+
+        if self.position.y > screen_height() {
+            self.position.y = 0.;
+        } else if self.position.y < 0. {
+            self.position.y = screen_height();
+        }
     }
 }
 
