@@ -114,6 +114,7 @@ impl Bullet {
         self.position.y += rotation.cos() * rand::gen_range(-30., -25.);
         self.position.x += rotation.sin() * rand::gen_range(25., 30.);
 
+        // wraping:
         if self.position.x > screen_width() {
             self.position.x = 0.;
         } else if self.position.x < 0. {
