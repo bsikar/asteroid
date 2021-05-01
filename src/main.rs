@@ -1,4 +1,6 @@
+use ::rand::{self, Rng};
 use macroquad::prelude::*;
+use std::collections::HashSet;
 
 const SHIP_HEIGHT: f32 = 25.;
 const SHIP_BASE: f32 = 22.;
@@ -104,50 +106,86 @@ impl Bullet {
         }
     }
 
-    fn draw(self) {
+    fn draw(&self) {
         draw_circle(self.position.x, self.position.y, BULLET_SIZE, BLACK);
     }
 
     fn update(&mut self) {
         // spacing of bullets
         let rotation = self.rotation.to_radians();
-        self.position.y += rotation.cos() * rand::gen_range(-30., -25.);
-        self.position.x += rotation.sin() * rand::gen_range(25., 30.);
-
-        // wraping:
-        if self.position.x > screen_width() {
-            self.position.x = 0.;
-        } else if self.position.x < 0. {
-            self.position.x = screen_width();
-        }
-
-        if self.position.y > screen_height() {
-            self.position.y = 0.;
-        } else if self.position.y < 0. {
-            self.position.y = screen_height();
-        }
+        self.position.y += rotation.cos() * rand::thread_rng().gen_range(-30.0..-25.);
+        self.position.x += rotation.sin() * rand::thread_rng().gen_range(25.0..30.);
     }
 }
 
-#[allow(dead_code)]
+const ASTEROID_LINE_THICKNESS: f32 = 2.;
+
 struct Asteroid {
     position: Vec2,
-    rotation: f32,
     sides: u8,
-    collided: bool,
+    size: f32,
+    rotation: f32,
 }
 
-impl Asteroid {}
+impl Asteroid {
+    fn new() -> Asteroid {
+        Asteroid {
+            position: Vec2::new(
+                rand::thread_rng().gen_range(35.0..screen_width() - 35.),
+                rand::thread_rng().gen_range(35.0..screen_height() - 35.),
+            ),
+            sides: 8,
+            size: 100.,
+            rotation: 0.,
+        }
+    }
+
+    fn draw(&self) {
+        draw_poly_lines(
+            self.position.x,
+            self.position.y,
+            self.sides,
+            self.size,
+            self.rotation,
+            ASTEROID_LINE_THICKNESS,
+            BLACK,
+        )
+    }
+
+    fn collided(&self, bullet: &Bullet) -> bool {
+        if (self.position - bullet.position).length() < self.size {
+            return true;
+        }
+        false
+    }
+}
 
 #[macroquad::main("Asteroids")]
 async fn main() {
     let mut ship = Ship::new();
+    let mut asteroids: Vec<_> = (0..10).map(|_| Asteroid::new()).collect();
 
     loop {
         clear_background(LIGHTGRAY);
 
+        let mut indexes_to_remove = HashSet::new();
+        for (i, asteroid) in asteroids.iter().enumerate() {
+            for bullet in ship.bullets.iter() {
+                if asteroid.collided(&bullet) {
+                    indexes_to_remove.insert(i);
+                }
+            }
+        }
+
+        let mut num_removed = 0;
+        for i in indexes_to_remove {
+            asteroids.remove(i - num_removed);
+            num_removed += 1;
+        }
+
         ship.draw();
         ship.mv();
+        asteroids.iter().for_each(|a| a.draw());
 
         next_frame().await;
     }
