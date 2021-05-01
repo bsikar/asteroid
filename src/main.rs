@@ -39,7 +39,10 @@ impl Ship {
 
     fn mv(&mut self) {
         if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
-            self.position.y -= 5.;
+            let rotation = self.rotation.to_radians();
+
+            self.position.y += rotation.cos() * -3.;
+            self.position.x += rotation.sin() * 3.;
         }
 
         if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
