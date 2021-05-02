@@ -134,13 +134,18 @@ impl Asteroid {
                 rand::thread_rng().gen_range(35.0..screen_width() - 35.),
                 rand::thread_rng().gen_range(35.0..screen_height() - 35.),
             ),
-            sides: 8,
+            sides: rand::thread_rng().gen_range(12..25),
             size: 100.,
             rotation: rand::thread_rng().gen_range(-360.0..360.),
         }
     }
 
     fn draw(&self) {
+        /* 12 - 25
+         * 9 - 12
+         * 6 - 9
+         * 3 - 6
+         */
         draw_poly_lines(
             self.position.x,
             self.position.y,
@@ -157,6 +162,49 @@ impl Asteroid {
             return true;
         }
         false
+    }
+
+    fn resize(&mut self) -> Option<Asteroid> {
+        let sides_range: std::ops::RangeInclusive<u8>;
+        match self.sides {
+            (12..=24) => {
+                self.sides = rand::thread_rng().gen_range(9..=11);
+                sides_range = 9..=11;
+            }
+            (9..=11) => {
+                self.sides = rand::thread_rng().gen_range(6..=8);
+                sides_range = 6..=8;
+            }
+            (6..=8) => {
+                self.sides = rand::thread_rng().gen_range(3..=5);
+                sides_range = 3..=5;
+            }
+            _ => return None,
+        }
+
+        let some = Some(Asteroid {
+            position: Vec2::new(
+                rand::thread_rng().gen_range(
+                    self.position.x - (self.size * 4.)..=self.position.x + (self.size * 4.),
+                ),
+                rand::thread_rng().gen_range(
+                    self.position.y - (self.size * 4.)..=self.position.y + (self.size * 4.),
+                ),
+            ),
+            sides: rand::thread_rng().gen_range(sides_range),
+            size: self.size / 2.,
+            rotation: self.rotation * 2.,
+        });
+
+        self.size /= 2.;
+        self.rotation *= 2.;
+
+        self.position.x = rand::thread_rng()
+            .gen_range(self.position.x - (self.size * 4.)..=self.position.x + (self.size * 4.));
+        self.position.y = rand::thread_rng()
+            .gen_range(self.position.y - (self.size * 4.)..=self.position.y + (self.size * 4.));
+
+        some
     }
 
     fn mv(&mut self) {
@@ -190,9 +238,11 @@ async fn main() {
 }
 
 const FONT_SIZE: f32 = 30.;
+const ASTEROID_COUNT: u8 = 10;
+
 async fn play() -> bool {
     let mut ship = Ship::new();
-    let mut asteroids: Vec<_> = (0..10).map(|_| Asteroid::new()).collect();
+    let mut asteroids: Vec<_> = (0..ASTEROID_COUNT).map(|_| Asteroid::new()).collect();
     let mut did_win = true;
 
     loop {
@@ -235,10 +285,17 @@ async fn play() -> bool {
         }
 
         let mut indexes_to_remove = HashSet::new();
-        for (i, asteroid) in asteroids.iter().enumerate() {
+        let mut asteroids_to_add = vec![];
+        for (i, asteroid) in asteroids.iter_mut().enumerate() {
             for bullet in ship.bullets.iter() {
                 if asteroid.collided(&bullet.position) {
-                    indexes_to_remove.insert(i);
+                    let a = asteroid.resize();
+                    match a {
+                        Some(asteroid) => asteroids_to_add.push(asteroid),
+                        None => {
+                            indexes_to_remove.insert(i);
+                        }
+                    }
                 }
             }
 
@@ -254,6 +311,9 @@ async fn play() -> bool {
             for i in indexes_to_remove {
                 asteroids.remove(i - num_removed);
                 num_removed += 1;
+            }
+            for i in asteroids_to_add {
+                asteroids.push(i);
             }
         }
 
