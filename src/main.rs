@@ -38,7 +38,7 @@ impl Ship {
             self.position.y + rotation.sin() * SHIP_BASE / 2. + rotation.cos() * SHIP_HEIGHT / 2.,
         );
 
-        draw_triangle_lines(v1, v2, v3, 2., BLACK);
+        draw_triangle_lines(v1, v2, v3, 2., LIGHTGRAY);
 
         self.bullets.iter_mut().for_each(|b| b.update());
         self.bullets.iter_mut().for_each(|b| b.draw());
@@ -107,7 +107,7 @@ impl Bullet {
     }
 
     fn draw(&self) {
-        draw_circle(self.position.x, self.position.y, BULLET_SIZE, BLACK);
+        draw_circle(self.position.x, self.position.y, BULLET_SIZE, PINK);
     }
 
     fn update(&mut self) {
@@ -153,7 +153,7 @@ impl Asteroid {
             self.size,
             self.rotation,
             ASTEROID_LINE_THICKNESS,
-            BLACK,
+            LIGHTGRAY,
         )
     }
 
@@ -250,7 +250,7 @@ async fn play() -> bool {
             return false;
         }
 
-        clear_background(LIGHTGRAY);
+        clear_background(BLACK);
 
         if asteroids.is_empty() && did_win {
             let text = "You Win!. Press [enter] to play again.";
@@ -261,7 +261,7 @@ async fn play() -> bool {
                 screen_width() / 2. - text_size.width / 2.,
                 screen_height() / 2. - text_size.height / 2.,
                 FONT_SIZE,
-                DARKGRAY,
+                WHITE,
             );
 
             if is_key_down(KeyCode::Enter) {
@@ -276,7 +276,7 @@ async fn play() -> bool {
                 screen_width() / 2. - text_size.width / 2.,
                 screen_height() / 2. - text_size.height / 2.,
                 FONT_SIZE,
-                DARKGRAY,
+                WHITE,
             );
 
             if is_key_down(KeyCode::Enter) {
