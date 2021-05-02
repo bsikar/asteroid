@@ -136,7 +136,7 @@ impl Asteroid {
             ),
             sides: 8,
             size: 100.,
-            rotation: 0.,
+            rotation: rand::thread_rng().gen_range(-360.0..360.),
         }
     }
 
@@ -152,40 +152,115 @@ impl Asteroid {
         )
     }
 
-    fn collided(&self, bullet: &Bullet) -> bool {
-        if (self.position - bullet.position).length() < self.size {
+    fn collided(&self, position: &Vec2) -> bool {
+        if (self.position - *position).length() < self.size {
             return true;
         }
         false
+    }
+
+    fn mv(&mut self) {
+        let rotation = self.rotation.to_radians();
+
+        self.position.y += rotation.cos() * -4.;
+        self.position.x += rotation.sin() * 4.;
+
+        // wraping:
+        if self.position.x > screen_width() {
+            self.position.x = 0.;
+        } else if self.position.x < 0. {
+            self.position.x = screen_width();
+        }
+
+        if self.position.y > screen_height() {
+            self.position.y = 0.;
+        } else if self.position.y < 0. {
+            self.position.y = screen_height();
+        }
     }
 }
 
 #[macroquad::main("Asteroids")]
 async fn main() {
+    loop {
+        if !play().await {
+            break;
+        }
+    }
+}
+
+const FONT_SIZE: f32 = 30.;
+async fn play() -> bool {
     let mut ship = Ship::new();
     let mut asteroids: Vec<_> = (0..10).map(|_| Asteroid::new()).collect();
+    let mut did_win = true;
 
     loop {
+        if is_key_down(KeyCode::Escape) {
+            return false;
+        }
+
         clear_background(LIGHTGRAY);
+
+        if asteroids.is_empty() && did_win {
+            let text = "You Win!. Press [enter] to play again.";
+            let text_size = measure_text(text, None, FONT_SIZE as _, 1.0);
+
+            draw_text(
+                text,
+                screen_width() / 2. - text_size.width / 2.,
+                screen_height() / 2. - text_size.height / 2.,
+                FONT_SIZE,
+                DARKGRAY,
+            );
+
+            if is_key_down(KeyCode::Enter) {
+                return true;
+            }
+        } else if asteroids.is_empty() {
+            let text = "Game Over. Press [enter] to play again.";
+            let text_size = measure_text(text, None, FONT_SIZE as _, 1.0);
+
+            draw_text(
+                text,
+                screen_width() / 2. - text_size.width / 2.,
+                screen_height() / 2. - text_size.height / 2.,
+                FONT_SIZE,
+                DARKGRAY,
+            );
+
+            if is_key_down(KeyCode::Enter) {
+                return true;
+            }
+        }
 
         let mut indexes_to_remove = HashSet::new();
         for (i, asteroid) in asteroids.iter().enumerate() {
             for bullet in ship.bullets.iter() {
-                if asteroid.collided(&bullet) {
+                if asteroid.collided(&bullet.position) {
                     indexes_to_remove.insert(i);
                 }
             }
+
+            if asteroid.collided(&ship.position) {
+                did_win = false;
+            }
         }
 
-        let mut num_removed = 0;
-        for i in indexes_to_remove {
-            asteroids.remove(i - num_removed);
-            num_removed += 1;
+        if !did_win {
+            asteroids = vec![];
+        } else {
+            let mut num_removed = 0;
+            for i in indexes_to_remove {
+                asteroids.remove(i - num_removed);
+                num_removed += 1;
+            }
         }
 
         ship.draw();
         ship.mv();
         asteroids.iter().for_each(|a| a.draw());
+        asteroids.iter_mut().for_each(|a| a.mv());
 
         next_frame().await;
     }
