@@ -4,11 +4,32 @@ use std::collections::HashSet;
 
 const SHIP_HEIGHT: f32 = 25.;
 const SHIP_BASE: f32 = 22.;
+const SHIP_LINE_THICKNESS: f32 = 2.;
+const SHIP_ROTATION_SPEED: f32 = 5.;
+const SHIP_MOVING_SPEED: f32 = 4.;
+const SHEILD_SIZE: f32 = 28.;
+const SHEILD_LINE_THICKNESS: f32 = 5.;
+
+const ASTEROID_COUNT: u8 = 10;
+const ASTEROID_LINE_THICKNESS: f32 = 2.;
+
+const BULLET_SIZE: f32 = 2.;
+const BULLET_RANGE: f64 = 0.25;
+
+const BACKGROUND_COLOR: Color = BLACK;
+const SHIP_COLOR: Color = LIME;
+const SHEILD_COLOR: Color = GOLD;
+const ASTEROID_COLOR: Color = LIGHTGRAY;
+const BULLET_COLOR: Color = MAROON;
+const TEXT_COLOR: Color = WHITE;
+
+const TEXT_SIZE: f32 = 30.;
 
 struct Ship {
     position: Vec2,
     rotation: f32,
     bullets: Vec<Bullet>,
+    has_sheild: bool,
 }
 
 impl Ship {
@@ -17,6 +38,7 @@ impl Ship {
             position: Vec2::new(screen_width() / 2., screen_height() / 2.),
             rotation: 0.,
             bullets: vec![],
+            has_sheild: false,
         }
     }
 
@@ -38,33 +60,47 @@ impl Ship {
             self.position.y + rotation.sin() * SHIP_BASE / 2. + rotation.cos() * SHIP_HEIGHT / 2.,
         );
 
-        draw_triangle_lines(v1, v2, v3, 2., LIGHTGRAY);
+        draw_triangle_lines(v1, v2, v3, SHIP_LINE_THICKNESS, SHIP_COLOR);
 
         self.bullets.iter_mut().for_each(|b| b.update());
         self.bullets.iter_mut().for_each(|b| b.draw());
         // range of bullets
         self.bullets
-            .retain(|b| get_time() - b.time_shot_out < 0.25 && !b.collided);
+            .retain(|b| get_time() - b.time_shot_out < BULLET_RANGE && !b.collided);
     }
 
     fn mv(&mut self) {
         if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
             let rotation = self.rotation.to_radians();
 
-            self.position.y += rotation.cos() * -4.;
-            self.position.x += rotation.sin() * 4.;
+            self.position.y += rotation.cos() * -SHIP_MOVING_SPEED;
+            self.position.x += rotation.sin() * SHIP_MOVING_SPEED;
         }
 
-        if is_key_down(KeyCode::Space) || is_mouse_button_down(MouseButton::Left) {
+        if is_mouse_button_down(MouseButton::Left) {
+            self.has_sheild = false;
             self.shoot();
         }
 
+        if is_key_down(KeyCode::Space) && !is_mouse_button_down(MouseButton::Left) {
+            self.has_sheild = true;
+            draw_poly_lines(
+                self.position.x,
+                self.position.y,
+                255, // 255 is here to make it a circle since 255 is the max number that this can be
+                SHEILD_SIZE,
+                self.rotation,
+                SHEILD_LINE_THICKNESS,
+                SHEILD_COLOR,
+            )
+        }
+
         if is_key_down(KeyCode::Left) || is_key_down(KeyCode::A) {
-            self.rotation -= 5.;
+            self.rotation -= SHIP_ROTATION_SPEED;
         }
 
         if is_key_down(KeyCode::Right) || is_key_down(KeyCode::D) {
-            self.rotation += 5.;
+            self.rotation += SHIP_ROTATION_SPEED;
         }
 
         // wraping:
@@ -86,8 +122,6 @@ impl Ship {
     }
 }
 
-const BULLET_SIZE: f32 = 2.;
-
 #[derive(Copy, Clone)]
 struct Bullet {
     position: Vec2,
@@ -107,7 +141,7 @@ impl Bullet {
     }
 
     fn draw(&self) {
-        draw_circle(self.position.x, self.position.y, BULLET_SIZE, PINK);
+        draw_circle(self.position.x, self.position.y, BULLET_SIZE, BULLET_COLOR);
     }
 
     fn update(&mut self) {
@@ -117,8 +151,6 @@ impl Bullet {
         self.position.x += rotation.sin() * rand::thread_rng().gen_range(25.0..30.);
     }
 }
-
-const ASTEROID_LINE_THICKNESS: f32 = 2.;
 
 struct Asteroid {
     position: Vec2,
@@ -153,7 +185,7 @@ impl Asteroid {
             self.size,
             self.rotation,
             ASTEROID_LINE_THICKNESS,
-            LIGHTGRAY,
+            ASTEROID_COLOR,
         )
     }
 
@@ -210,8 +242,28 @@ impl Asteroid {
     fn mv(&mut self) {
         let rotation = self.rotation.to_radians();
 
-        self.position.y += rotation.cos() * -4.;
-        self.position.x += rotation.sin() * 4.;
+        match self.sides {
+            (12..=24) => {
+                let speed = rand::thread_rng().gen_range(4.0..=5.);
+                self.position.y += rotation.cos() * -speed;
+                self.position.x += rotation.sin() * speed;
+            }
+            (9..=11) => {
+                let speed = rand::thread_rng().gen_range(5.0..=6.);
+                self.position.y += rotation.cos() * -speed;
+                self.position.x += rotation.sin() * speed;
+            }
+            (6..=8) => {
+                let speed = rand::thread_rng().gen_range(6.0..=7.);
+                self.position.y += rotation.cos() * -speed;
+                self.position.x += rotation.sin() * speed;
+            }
+            _ => {
+                let speed = rand::thread_rng().gen_range(7.0..=8.);
+                self.position.y += rotation.cos() * -speed;
+                self.position.x += rotation.sin() * speed;
+            }
+        }
 
         // wraping:
         if self.position.x > screen_width() {
@@ -237,9 +289,6 @@ async fn main() {
     }
 }
 
-const FONT_SIZE: f32 = 30.;
-const ASTEROID_COUNT: u8 = 10;
-
 async fn play() -> bool {
     let mut ship = Ship::new();
     let mut asteroids: Vec<_> = (0..ASTEROID_COUNT).map(|_| Asteroid::new()).collect();
@@ -250,18 +299,18 @@ async fn play() -> bool {
             return false;
         }
 
-        clear_background(BLACK);
+        clear_background(BACKGROUND_COLOR);
 
         if asteroids.is_empty() && did_win {
             let text = "You Win!. Press [enter] to play again.";
-            let text_size = measure_text(text, None, FONT_SIZE as _, 1.0);
+            let text_size = measure_text(text, None, TEXT_SIZE as u16, 1.0);
 
             draw_text(
                 text,
                 screen_width() / 2. - text_size.width / 2.,
                 screen_height() / 2. - text_size.height / 2.,
-                FONT_SIZE,
-                WHITE,
+                TEXT_SIZE,
+                TEXT_COLOR,
             );
 
             if is_key_down(KeyCode::Enter) {
@@ -269,14 +318,14 @@ async fn play() -> bool {
             }
         } else if asteroids.is_empty() {
             let text = "Game Over. Press [enter] to play again.";
-            let text_size = measure_text(text, None, FONT_SIZE as _, 1.0);
+            let text_size = measure_text(text, None, TEXT_SIZE as u16, 1.0);
 
             draw_text(
                 text,
                 screen_width() / 2. - text_size.width / 2.,
                 screen_height() / 2. - text_size.height / 2.,
-                FONT_SIZE,
-                WHITE,
+                TEXT_SIZE,
+                TEXT_COLOR,
             );
 
             if is_key_down(KeyCode::Enter) {
@@ -299,7 +348,7 @@ async fn play() -> bool {
                 }
             }
 
-            if asteroid.collided(&ship.position) {
+            if asteroid.collided(&ship.position) && !ship.has_sheild {
                 did_win = false;
             }
         }
