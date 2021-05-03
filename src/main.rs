@@ -46,22 +46,24 @@ impl Ship {
         let rotation = self.rotation.to_radians();
 
         let v1 = Vec2::new(
-            self.position.x + (rotation.sin() * (SHIP_HEIGHT / 2.)),
-            self.position.y - (rotation.cos() * (SHIP_HEIGHT / 2.)),
+            self.position.x + (rotation.sin() * SHIP_HEIGHT / 2.),
+            self.position.y - (rotation.cos() * SHIP_HEIGHT / 2.),
         );
 
         let v2 = Vec2::new(
             self.position.x
-                - (rotation.cos() * (SHIP_BASE / 2.) - (rotation.sin() * (SHIP_HEIGHT / 2.))),
-            self.position.y
-                - (rotation.sin() * (SHIP_BASE / 2.) + (rotation.cos() * (SHIP_HEIGHT / 2.))),
+                - (rotation.cos() * SHIP_BASE / 2.)
+                - (rotation.sin() * SHIP_HEIGHT / 2.),
+            self.position.y - (rotation.sin() * SHIP_BASE / 2.)
+                + (rotation.cos() * SHIP_HEIGHT / 2.),
         );
 
         let v3 = Vec2::new(
-            self.position.x
-                + (rotation.cos() * (SHIP_BASE / 2.) - (rotation.sin() * (SHIP_HEIGHT / 2.))),
+            self.position.x + (rotation.cos() * SHIP_BASE / 2.)
+                - (rotation.sin() * SHIP_HEIGHT / 2.),
             self.position.y
-                + (rotation.sin() * (SHIP_BASE / 2.) + (rotation.cos() * (SHIP_HEIGHT / 2.))),
+                + (rotation.sin() * SHIP_BASE / 2.)
+                + (rotation.cos() * SHIP_HEIGHT / 2.),
         );
 
         draw_triangle_lines(v1, v2, v3, SHIP_LINE_THICKNESS, SHIP_COLOR);
@@ -74,6 +76,10 @@ impl Ship {
     }
 
     fn mv(&mut self) {
+        if !is_key_down(KeyCode::Space) {
+            self.has_sheild = false;
+        }
+
         if is_key_down(KeyCode::Up) || is_key_down(KeyCode::W) {
             let rotation = self.rotation.to_radians();
 
@@ -82,7 +88,6 @@ impl Ship {
         }
 
         if is_mouse_button_down(MouseButton::Left) {
-            self.has_sheild = false;
             self.shoot();
         }
 
