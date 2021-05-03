@@ -14,13 +14,14 @@ const ASTEROID_COUNT: u8 = 10;
 const ASTEROID_LINE_THICKNESS: f32 = 2.;
 
 const BULLET_SIZE: f32 = 2.;
-const BULLET_RANGE: f64 = 0.25;
+const BULLET_RANGE: f64 = 0.125;
+const BULLET_DELAY: f64 = 0.0;
 
 const BACKGROUND_COLOR: Color = BLACK;
 const SHIP_COLOR: Color = LIME;
 const SHEILD_COLOR: Color = GOLD;
 const ASTEROID_COLOR: Color = LIGHTGRAY;
-const BULLET_COLOR: Color = MAROON;
+const BULLET_COLOR: Color = RED;
 const TEXT_COLOR: Color = WHITE;
 
 const TEXT_SIZE: f32 = 30.;
@@ -30,6 +31,7 @@ struct Ship {
     rotation: f32,
     bullets: Vec<Bullet>,
     has_sheild: bool,
+    last_time_shot: f64,
 }
 
 impl Ship {
@@ -39,6 +41,7 @@ impl Ship {
             rotation: 0.,
             bullets: vec![],
             has_sheild: false,
+            last_time_shot: get_time(),
         }
     }
 
@@ -127,7 +130,10 @@ impl Ship {
     }
 
     fn shoot(&mut self) {
-        self.bullets.push(Bullet::new(self.position, self.rotation));
+        if get_time() - self.last_time_shot > BULLET_DELAY {
+            self.bullets.push(Bullet::new(self.position, self.rotation));
+            self.last_time_shot = get_time();
+        }
     }
 }
 
