@@ -1,4 +1,3 @@
-use ::rand::{self, Rng};
 use macroquad::prelude::*;
 use std::collections::HashSet;
 
@@ -162,8 +161,8 @@ impl Bullet {
     fn update(&mut self) {
         // spacing of bullets
         let rotation = self.rotation.to_radians();
-        self.position.y += rotation.cos() * rand::thread_rng().gen_range(-30.0..-25.);
-        self.position.x += rotation.sin() * rand::thread_rng().gen_range(25.0..30.);
+        self.position.y += rotation.cos() * rand::gen_range(-30.0, -26.);
+        self.position.x += rotation.sin() * rand::gen_range(25.0, 29.);
     }
 }
 
@@ -178,12 +177,12 @@ impl Asteroid {
     fn new() -> Asteroid {
         Asteroid {
             position: Vec2::new(
-                rand::thread_rng().gen_range(35.0..screen_width() - 35.),
-                rand::thread_rng().gen_range(35.0..screen_height() - 35.),
+                rand::gen_range(35.0, screen_width() - 36.),
+                rand::gen_range(35.0, screen_height() - 36.),
             ),
-            sides: rand::thread_rng().gen_range(12..25),
+            sides: rand::gen_range(12, 24),
             size: 100.,
-            rotation: rand::thread_rng().gen_range(-360.0..360.),
+            rotation: rand::gen_range(-360.0, 359.),
         }
     }
 
@@ -212,33 +211,34 @@ impl Asteroid {
     }
 
     fn resize(&mut self) -> Option<Asteroid> {
-        let sides_range: std::ops::RangeInclusive<u8>;
-        match self.sides {
+        let sides_range = match self.sides {
             (12..=24) => {
-                self.sides = rand::thread_rng().gen_range(9..=11);
-                sides_range = 9..=11;
+                self.sides = rand::gen_range(9, 11);
+                (9, 11)
             }
             (9..=11) => {
-                self.sides = rand::thread_rng().gen_range(6..=8);
-                sides_range = 6..=8;
+                self.sides = rand::gen_range(6, 8);
+                (6, 8)
             }
             (6..=8) => {
-                self.sides = rand::thread_rng().gen_range(3..=5);
-                sides_range = 3..=5;
+                self.sides = rand::gen_range(3, 5);
+                (3, 5)
             }
             _ => return None,
-        }
+        };
 
         let some = Some(Asteroid {
             position: Vec2::new(
-                rand::thread_rng().gen_range(
-                    self.position.x - (self.size * 4.)..=self.position.x + (self.size * 4.),
+                rand::gen_range(
+                    self.position.x - (self.size * 4.),
+                    self.position.x + (self.size * 4.),
                 ),
-                rand::thread_rng().gen_range(
-                    self.position.y - (self.size * 4.)..=self.position.y + (self.size * 4.),
+                rand::gen_range(
+                    self.position.y - (self.size * 4.),
+                    self.position.y + (self.size * 4.),
                 ),
             ),
-            sides: rand::thread_rng().gen_range(sides_range),
+            sides: rand::gen_range(sides_range.0, sides_range.1),
             size: self.size / 2.,
             rotation: self.rotation * 2.,
         });
@@ -246,10 +246,14 @@ impl Asteroid {
         self.size /= 2.;
         self.rotation *= 2.;
 
-        self.position.x = rand::thread_rng()
-            .gen_range(self.position.x - (self.size * 4.)..=self.position.x + (self.size * 4.));
-        self.position.y = rand::thread_rng()
-            .gen_range(self.position.y - (self.size * 4.)..=self.position.y + (self.size * 4.));
+        self.position.x = rand::gen_range(
+            self.position.x - (self.size * 4.),
+            self.position.x + (self.size * 4.),
+        );
+        self.position.y = rand::gen_range(
+            self.position.y - (self.size * 4.),
+            self.position.y + (self.size * 4.),
+        );
 
         some
     }
@@ -259,22 +263,22 @@ impl Asteroid {
 
         match self.sides {
             (12..=24) => {
-                let speed = rand::thread_rng().gen_range(4.0..=5.);
+                let speed = rand::gen_range(4.0, 5.);
                 self.position.y += rotation.cos() * -speed;
                 self.position.x += rotation.sin() * speed;
             }
             (9..=11) => {
-                let speed = rand::thread_rng().gen_range(5.0..=6.);
+                let speed = rand::gen_range(5.0, 6.);
                 self.position.y += rotation.cos() * -speed;
                 self.position.x += rotation.sin() * speed;
             }
             (6..=8) => {
-                let speed = rand::thread_rng().gen_range(6.0..=7.);
+                let speed = rand::gen_range(6.0, 7.);
                 self.position.y += rotation.cos() * -speed;
                 self.position.x += rotation.sin() * speed;
             }
             _ => {
-                let speed = rand::thread_rng().gen_range(7.0..=8.);
+                let speed = rand::gen_range(7.0, 8.);
                 self.position.y += rotation.cos() * -speed;
                 self.position.x += rotation.sin() * speed;
             }
@@ -371,10 +375,8 @@ async fn play() -> bool {
         if !did_win {
             asteroids = vec![];
         } else {
-            let mut num_removed = 0;
-            for i in indexes_to_remove {
+            for (num_removed, i) in indexes_to_remove.into_iter().enumerate() {
                 asteroids.remove(i - num_removed);
-                num_removed += 1;
             }
             for i in asteroids_to_add {
                 asteroids.push(i);
