@@ -35,6 +35,7 @@ struct Ship {
 
 impl Ship {
     fn new() -> Ship {
+        rand::srand(macroquad::miniquad::date::now() as _);
         Ship {
             position: Vec2::new(screen_width() / 2., screen_height() / 2.),
             rotation: 0.,
